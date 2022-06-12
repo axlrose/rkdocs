@@ -1,0 +1,3 @@
+
+The latest AVL of eMMC/SPI Nor/SPI Nand/DDR/SLC Nand release link:
+https://redmine.rock-chips.com/projects/fae/documents

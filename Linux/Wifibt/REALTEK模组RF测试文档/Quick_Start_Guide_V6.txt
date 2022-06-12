@@ -1,0 +1,314 @@
+﻿===============================================================================
+		[ Table of Contents ]
+===============================================================================
+1. [ Features.]
+2. [Software Package.]
+3. [Quick Start Guide.]
+---3.1  [ Build MP Driver module.(Select card type) ]
+---3.2  [ Build Android wireless tools ]
+---3.3  [ MP Use Example. ]				Chinese translation:
+------3.3.1   [ Continuous Tx testing ]				( 无间断调制讯号发送测试 )
+------3.3.2   [ Continuous Packet Tx testing ]    		( 不限封包数量调制讯号发送测试 )
+------3.3.3   [ Count Packet Tx testing	]			( 有限封包数量调制讯号发送测试 )
+------3.3.4   [ Carrier suppression testing ] 			( 载波抑制发送测试 )
+------3.3.5   [ Single Tone Tx testing ]			( 无调制讯号单频载波发送测试 ) 
+------3.3.6   [ Air Rx testing ]				( 接收封包测试 )
+4. [ Phy Efuse Read/Write Use Example ].
+------4.1 [ efuse_get ]
+------4.2 [ efuse_get ]
+------4.3 [ Efuse's spec.]
+
+5. [Calibration Crystal Cap adjust] 
+
+6. [ Normal /MP Mode switch.]
+
+7. [ Android MP UI ] : refer the RtkMpTool-ReadMe.txt 
+
+8. [ Read Efuse From the File ] -refer the EfuseReadfromFile.ppt
+
+===============================================================================
+		[1. Features]---Reminded required reading...................
+===============================================================================
+
+The new driver had support the Normal Mode switch to MP Mode function,please frist to confirm  the driver version was "v4.1.3.5xxx".
+
+	The following steps demonstrate Realtek Wireless Adapter Mass Production Linux Tool. 
+This is a simple install guide, we use Linux utility “iwpriv”or "rtwpriv" to get and set I/O control to WLAN driver. 
+
+iwpriv and rtwpriv are private wireless ioctls/requests allow a device to export the control of those device specific features.
+iwpriv need the kernel config define "CONFIG_WIRELESS_EXT" ,or use the "rtwpriv" with no Wireless extensions.
+
+if need more detail or example command information, Please refer to UserGuide.doc .
+
+===============================================================================
+		[2. Software Package] - To check have the Component .tar.gz files.
+===============================================================================
+1. Driver source - rtXXX_linux_MP_vX.X.X.tar.gz
+2. Wireless tool Source -If want to use for Android system - Android_wireless_tools.tar
+			-If Android kernel not support the "CONFIG_WIRELESS_EXT": Wireless extensions , Please use the Realtek tools  "rtwpriv.zip"
+			
+3. Documents
+		- LinuxDriver_MP_Iwpriv_UserGuide.doc
+
+===============================================================================
+		[3. Quick Start Guide]
+===============================================================================
+
+===========================================================
+		[3.1. Build Driver module]
+===========================================================
+Note: Use su/sudo su for root authentication with following command.
+
+1. Unzip Driver source folder -
+	# tar -xvzf rtlXXX_linux_MP_linux_vx.x.x.tar.gz
+
+2. Change to driver source code directory -
+	# cd rtlXXX_linux_MP__linux_vx.x.x
+
+3. Config compile Setting-
+
+   Confirm the "Makefile", and modify the line 21 "CONFIG_MP_INCLUDED = n"  to "CONFIG_MP_INCLUDED = y"
+   
+   If your target platform is the platform you're compiling driver,
+   maybe you don't need to change any setting.
+   Otherwise you need to do some configuration manually,
+   like cross compiler and kernel source tree directory.
+	ex.
+		ARCH := arm
+		CROSS_COMPILE := arm-none-linux-gnueabi-
+		KSRC := /usr/src/linux-2.6.34.1
+
+4. Make to choose card type for 8188eus or 8189es
+
+#chmod 777 make_drv
+#./make_drv
+Please Select card type(1/2):
+1)RTL8188eus
+2)RTL8189es
+#?input 1 or 2 & enter.
+
+4. Compile and build the driver source code -
+# make
+
+If nothing goes wrong, the driver "/81xx.ko" will be generated.
+
+If there're still some problems or need more detail compile driver guide,
+please check normal driver package for more reference.
+
+P.S. If you want default load driver to enable the MP function.use the command "insmod 8xxx.ko rtw_mp_mode=1".
+
+============================================================================================================
+
+===========================================================
+	3.2 Build Android wireless tools
+===========================================================
+
+If want to use for Android system, we need to Build iwpriv(wireless tools) for android.
+
+#tar zxvf Android_wireless_tools-iwpriv.tar.gz
+
+#cp wireless_tools froyo-x86/external/
+
+root@realtek-desktop:~/Desktop/froyo-x86/external/wireless_tools# . ../../build/envsetup.sh 
+root@realtek-desktop:~/Desktop/froyo-x86/external/wireless_tools# mm
+
+.....
+
+target Non-prelinked: iwpriv (out/target/product/eeepc/symbols/system/bin/iwpriv)
+target Unstripped: iwpriv (out/target/product/eeepc/obj/EXECUTABLES/iwpriv_intermediates/iwpriv)
+Install: out/target/product/eeepc/system/xbin/iwpriv
+
+#cp " out/target/product/eeepc/system/xbin/iwpriv "  to target platform file system " system/xbin/iwpriv ".
+
+==========================================================
+	3.2 Build Realtek MP tools
+===========================================================
+If Android kernel not support the "CONFIG_WIRELESS_EXT": Wireless extensions 
+,change to use the realtek mp tool(rtwpriv) for android system.
+
+How to build rtwpriv ,please refer the readme.txt in the rtwpriv.zip package.
+
+#cp " rtwpriv"  to target platform file system " system/xbin/rtwpriv ".
+
+===========================================================
+		[3.3 MP Use Example]
+===========================================================
+(Execute the following commands after WLAN interface is normally opened)
+If you want to change the input parameter(rate、channel、txpower、bandwidth),please must input advance the command "iwpriv wlan0 mp_ctx stop".
+Please refer the doc "iwpriv_mp_settings_for_different_data_rate.xls " for set data rate.
+
+
+##Before the MP test,please disable the WLAN UI and use command to wlan up for MP Test##.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3.3.1  [ Continuous Tx testing ] :	"iwpriv wlan0 mp_ctx background"
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ifconfig wlan0 up							# Enable Device for MP operation
+iwpriv wlan0 mp_start							# enter MP mode								
+iwpriv wlan0 mp_channel 1						# set channel to 1 . 2, 3, 4~13 etc.
+iwpriv wlan0 mp_bandwidth 40M=0,shortGI=0				# set 20M mode and long GI,set 40M is 40M=1.
+iwpriv wlan0 mp_ant_tx a						# Select antenna A for operation,if device have 2x2 antennam select antenna "a" or "b" and "ab" for operation.
+iwpriv wlan0 mp_txpower patha=44,pathb=44				# set path A and path B Tx power level,the Range is 0~63.
+iwpriv wlan0 mp_rate 108						# set OFDM data rate to 54Mbps,ex: CCK 1M = 2, CCK 5.5M = 11 ;OFDM 6M=12、54M = 108;N Rate: MCS0 = 128,MCS1 = 129,MCS 2=130....MCS15 = 143 etc.
+iwpriv wlan0 mp_ctx background						# start continuous Tx
+iwpriv wlan0 mp_ctx stop						# stop continuous Tx
+iwpriv wlan0 mp_stop							# exit MP mode
+ifconfig wlan0 down							# close WLAN interface
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3.3.2	[ Continuous Packet Tx testing] :	"iwpriv wlan0 mp_ctx background,pkt"
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+ifconfig wlan0 up							# Enable Device for MP operation
+iwpriv wlan0 mp_start							# enter MP mode								
+iwpriv wlan0 mp_channel 1						# set channel to 1 . 2, 3, 4~13 etc.
+iwpriv wlan0 mp_bandwidth 40M=0,shortGI=0				# set 20M mode and long GI,set 40M is 40M=1.
+iwpriv wlan0 mp_ant_tx a						# Select antenna A for operation,if device have 2x2 antennam select antenna "a" or "b" and "ab" for operation.
+iwpriv wlan0 mp_txpower patha=44,pathb=44				# set path A and path B Tx power level , the Range is 0~63.
+iwpriv wlan0 mp_rate 108						# set OFDM data rate to 54Mbps,ex: CCK 1M = 2, CCK 5.5M = 11 ;OFDM 6M=12、54M = 108 ; N Rate: MCS0 = 128, MCS1 = 129 MCS 2=130....MCS15 = 143 etc.
+iwpriv wlan0 mp_ctx background,pkt					# start continuous Packet Tx
+iwpriv wlan0 mp_ctx stop						# stop continuous Tx
+iwpriv wlan0 mp_stop							# exit MP mode
+ifconfig wlan0 down							# close WLAN interface
+
+ifconfig wlan0 up
+rtwpriv wlan0 mp_start
+rtwpriv wlan0 mp_channel 1
+rtwpriv wlan0 mp_bandwidth 40M=0,shortGI=0
+rtwpriv wlan0 mp_ant_tx b
+rtwpriv wlan0 mp_txpower patha=44,pathb=44
+rtwpriv wlan0 mp_rate 108
+rtwpriv wlan0 mp_ctx background,pkt
+
+rtwpriv wlan0 mp_ctx stop
+rtwpriv wlan0 mp_stop
+ifconfig wlan0 down
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3.3.3	[ Count Packet Tx testing ]:	"iwpriv wlan0 mp_ctx count=%d,pkt"
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ifconfig wlan0 up							# Enable Device for MP operation
+iwpriv wlan0 mp_start							# Enter MP mode
+iwpriv wlan0 mp_channel 1						# Set channel to 1 . 2, 3, 4~13 etc.
+iwpriv wlan0 mp_bandwidth 40M=0,shortGI=0				# Set 20M mode and long GI,set 40M is 40M=1.
+iwpriv wlan0 mp_ant_tx a						# Select antenna A for operation,if device have 2x2 antennam select antenna "a" or "b" and "ab" for operation.
+iwpriv wlan0 mp_txpower patha=44,pathb=44				# Set path A and path B Tx power level , the Range is 0~63.
+iwpriv wlan0 mp_rate 108						# Set OFDM data rate to 54Mbps,ex: CCK 1M = 2, CCK 5.5M = 11 ;OFDM 6M=12、54M = 108 ; N Rate: MCS0 = 128, MCS1 = 129 MCS 2=130....MCS15 = 143 etc.
+iwpriv wlan0 mp_ctx count=%d,pkt					# "%d" Number of packets start packet Tx
+iwpriv wlan0 mp_ctx stop						# stop continuous Tx
+iwpriv wlan0 mp_stop							# exit MP mode
+ifconfig wlan0 down							# close WLAN interface
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3.3.4	[ Carrier suppression testing ]: 	"iwpriv wlan0 mp_ctx cs,background"
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ifconfig wlan0 up						# Enable Device for MP operation
+iwpriv wlan0 mp_start						# enter MP mode								
+iwpriv wlan0 mp_channel 1					# set channel to 1 . 2, 3, 4~13 etc.
+iwpriv wlan0 mp_bandwidth 40M=0,shortGI=0			# set 20M mode and long GI,set 40M is 40M=1.
+iwpriv wlan0 mp_ant_tx a					# Select antenna A for operation,if device have 2x2 antennam select antenna "a" or "b" and "ab" for operation.
+iwpriv wlan0 mp_txpower patha=44,pathb=44			# set path A and path B Tx power level , the Range is 0~63.
+iwpriv wlan0 mp_rate 108					# set OFDM data rate to 54Mbps,ex: CCK 1M = 2, CCK 5.5M = 11 ;OFDM 6M=12、54M = 108 ; N Rate: MCS0 = 128, MCS1 = 129 MCS 2=130....MCS15 = 143 etc.
+iwpriv wlan0 mp_ctx background,cs				# start sending carrier suppression signal
+iwpriv wlan0 mp_ctx stop					# stop continuous Tx
+iwpriv wlan0 mp_stop						# exit MP mode
+ifconfig wlan0 down						# close WLAN interface
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3.3.5	[ Single Tone Tx testing ]:  	"iwpriv wlan0 mp_ctx background,stone"
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ifconfig wlan0 up						# Enable Device for MP operation
+iwpriv wlan0 mp_start						# enter MP mode								
+iwpriv wlan0 mp_channel 1					# set channel to 1 . 2, 3, 4~13 etc.
+iwpriv wlan0 mp_bandwidth 40M=0,shortGI=0			# set 20M mode and long GI,set 40M is 40M=1.
+iwpriv wlan0 mp_ant_tx a					# Select antenna A for operation,if device have 2x2 antennam select antenna "a" or "b" and "ab" for operation.
+iwpriv wlan0 mp_txpower patha=44,pathb=44			# set path A and path B Tx power level , the Range is 0~63.
+iwpriv wlan0 mp_rate 108					# set OFDM data rate to 54Mbps,ex: CCK 1M = 2, CCK 5.5M = 11 ;OFDM 6M=12、54M = 108 ; N Rate: MCS0 = 128, MCS1 = 129 MCS 2=130....MCS15 = 143 etc.
+iwpriv wlan0 mp_ctx background,stone				# start sending single tone signal
+iwpriv wlan0 mp_ctx stop					# stop continuous Tx
+iwpriv wlan0 mp_stop						# exit MP mode
+ifconfig wlan0 down						# close WLAN interface
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+3.3.6	[ Air Rx testing ]:  	"iwpriv wlan0 mp_arx start"
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ifconfig wlan0 up						# Enable Device for MP operation
+iwpriv wlan0 mp_start						# Enter MP mode								
+iwpriv wlan0 mp_channel 1					# Set channel to 1 . 2, 3, 4~13 etc.
+iwpriv wlan0 mp_bandwidth 40M=0,shortGI=0			# Set 20M mode and long GI or set to 40M is 40M=1.
+iwpriv wlan0 mp_ant_rx a					# Select antenna A for operation,if device have 2x2 antennam select antenna "a" or "b" and "ab" for operation.
+iwpriv wlan0 mp_arx start					# start air Rx teseting.
+iwpriv wlan0 mp_arx phy						# get the statistics.
+iwpriv wlan0 mp_arx stop or iwpriv wlan0 mp_reset_stats		# Stop air Rx test and show the Statistics / Reset Counter. 
+iwpriv wlan0 mp_stop						# exit MP mode
+ifconfig wlan0 down						# close WLAN interface
+
+ifconfig wlan0 up
+rtwpriv wlan0 mp_start
+rtwpriv wlan0 mp_channel 1
+rtwpriv wlan0 mp_bandwidth 40M=0,shortGI=0
+rtwpriv wlan0 mp_ant_rx b
+rtwpriv wlan0 mp_arx start
+rtwpriv wlan0 mp_arx phy
+rtwpriv wlan0 mp_arx stop or rtwpriv wlan0 mp_reset_stats
+rtwpriv wlan0 mp_stop
+ifconfig wlan0 down
+
+3. Detail manual command and more example please refer the "LinuxDriver_MP_Iwpriv_UserGuide.doc".
+
+=============================================================================================================
+			[4. Efuse Read/Write Use Example]
+===============================================================================================================
+use example:
+[4.1 efuse_get]
+iwpriv wlan0 efuse_get realmap       # read form driver for all efuse logic map.
+iwpriv wlan0 efuse_get realraw       # read form all phy efuse map.
+iwpriv wlan0 efuse_get mac           # read mac address  ( Direct to use the cmd for raed mac address from the efuse content )
+iwpriv wlan0 efuse_get rmap,16,6     # fix offset :cmd,offset,byteCounts ( Specified a start of the efuse's address and set the number of bytes for raed from the efuse content)
+------------------------------------------------------------------------------------------------------
+[4.2 efuse_set]
+iwpriv wlan0 efuse_set wmap,16,00e04c871234       #  cmd,offset,Data bytes[hex] ( Specified a offset address for write 6 bytes data "0x00,0xe0,0x4c,0x87,0x12,0x34" to the 0x16 start of the efuse content address )
+iwpriv wlan0 efuse_set mac,00e04c871234           #  cmd,Data bytes[hex] (Use set mac cmd to write 6 bytes data "0x00,0xe0,0x4c,0x87,0x12,0x34" to the  efuse content)
+
+------------------------------------------------------------------------------------------------------
+[4.3 Efuse's spec].
+If you want a clearer definition of reference, you can refer to the Efuse's spec "RTLXXX_EEPROM_SPEC_V1.1_2012xxxx.pdf"
+
+=============================================================================================================
+			5. [Calibration Crystal Cap Adjust] 
+=============================================================================================================
+
+MP use cmd to fine tuning the Crystal Cap val, and CMD is " iwpriv wlan0 mp_phypara xcap=%d".
+We can continue to adjust for get target vaule, then use the efuse cmd write to HW efuse, "iwpriv wlan0 efuse_set wmap,b9,20"
+
+8188EU example:
+The "B9" is Crystal Calibration efuse offset,please refer the efuse spec document.
+
+B9h	Crystal Calibration	XTAL_K Value
+	Bit[5:0], Xi=Xo Range 0~3F h.
+	Bit[7:6]: reserved
+	FF h = 00 h
+
+Default 20h
+
+
+=============================================================================================================
+			[6. Normal /MP Mode switch.]
+=============================================================================================================
+The new driver version v4.1 default support the normal/mp mode switch function. Please refer the following usage example.
+
+use example:
+1.Normal mode use.
+
+ifconfig wlan0 up 	 #Enable the wifi, the current mode is normal. scan 、connection、packet tx/rx .....
+
+2.change to MP mode.
+
+ifconfig wlan0 down
+ifconfig wlan0 up
+iwpriv wlan0 mp_start 	# MP packet Tx/Packet Rx test.....
+
+3.change to Normal Mode
+iwpriv wlan0 mp_stop	# Disable MP Mode.....
+ifconfig wlan0 down
+ifconfig wlan0 up	#Enable the wifi, the current mode is normal. scan 、connection、packet tx/rx .....
