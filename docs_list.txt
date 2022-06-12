@@ -1,4 +1,4 @@
-ommon
+common
 │   ├── AUDIO
 │   │   └── Rockchip_Developer_Guide_Audio_CN.pdf
 │   ├── AVL
